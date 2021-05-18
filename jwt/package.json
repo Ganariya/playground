@@ -1,0 +1,14 @@
+{
+  "name": "jwt",
+  "version": "1.0.0",
+  "description": "jwt をお勉強する.",
+  "main": "make_jwt.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "crypto": "^1.0.1"
+  }
+}
