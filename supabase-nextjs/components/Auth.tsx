@@ -22,9 +22,7 @@ export default function Auth(): JSX.Element {
     <div className="row flex flex-center">
       <div className="col-6 form-widget">
         <h1 className="header">Supabase + Next.js</h1>
-        <p className="description">
-          Sign in via magic link with your email below
-        </p>
+        <p className="description">サイトへようこそ！</p>
         <div>
           <input
             className="inputField"

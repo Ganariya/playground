@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { Session } from "@supabase/supabase-js";
 import { definitions } from "../types/supabase";
+import Avatar from "./Avatar";
 
 export default function Account({
   session,
@@ -83,6 +84,18 @@ export default function Account({
 
   return (
     <div className="form-widget">
+      <Avatar
+        url={avatarUrl}
+        size={150}
+        onUpload={(url: string) => {
+          setAvatarUrl(url);
+          updateProfile({
+            username,
+            website,
+            avatarUrl,
+          });
+        }}
+      />
       <div>
         <label htmlFor="email">Email</label>
         <input id="email" type="text" value={session!.user?.email} disabled />
