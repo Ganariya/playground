@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  ubuntu:
+    build: .
+    container_name: ubuntu_container
+    tty: true
+    volumes:
+      - .:/app
+    ports:
+      - 8080:80
+    privileged: true
