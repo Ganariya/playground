@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  ubuntu:
+    build: .
+    container_name: ubuntu-container
+    tty: true
+    volumes:
+      - .:/app
+    privileged: true
