@@ -1,0 +1,7 @@
+{
+    "dockerComposeFile": [
+        "../docker-compose.yml"
+    ],
+    "service": "ubuntu", // docker-compose.yml の service
+    "workspaceFolder": "/app"
+}
