@@ -26,6 +26,8 @@ RUN apt install -y \
     libvirt-daemon-system \
     strace
 
+RUN unminimize && apt install -y man-db
+
 RUN adduser `id -un` libvirt
 RUN adduser `id -un` libvirt-qemu
 RUN adduser `id -un` kvm
