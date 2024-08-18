@@ -1,21 +1,25 @@
 package main
 
 import (
-	"fmt"
+	"io"
+	"log"
 	"math/rand"
-
-	"github.com/labstack/echo/v4"
+	"net/http"
+	"strconv"
 )
 
 func main() {
-	e := echo.New()
-	e.GET("/", func(c echo.Context) error {
-		return c.String(200, "Hello, World!")
-	})
-	e.GET("/rolldice", func(c echo.Context) error {
-		dice := 1 + rand.Intn(6)
-		returnText := fmt.Sprintf("Hello, dice: %d\n", dice)
-		return c.String(200, returnText)
-	})
-	e.Logger.Fatal(e.Start(":1323"))
+	http.HandleFunc("/rolldice", rolldice)
+
+	log.Fatal(http.ListenAndServe(":1323", nil))
 }
+
+func rolldice(w http.ResponseWriter, r *http.Request) {
+	roll := 1 + rand.Intn(6)
+
+	resp := strconv.Itoa(roll) + "\n"
+	if _, err := io.WriteString(w, resp); err != nil {
+		log.Printf("Write failed: %v\n", err)
+	}
+}
+
