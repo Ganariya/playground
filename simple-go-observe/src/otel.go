@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutlog"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
-	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/log"
@@ -78,16 +78,27 @@ func newPropagator() propagation.TextMapPropagator {
 
 // トレース情報を記録する
 func newTraceProvider() (*trace.TracerProvider, error) {
-	traceExporter, err := stdouttrace.New(
-		stdouttrace.WithPrettyPrint())
+	// traceExporter, err := stdouttrace.New(
+	// 	stdouttrace.WithPrettyPrint())
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	traceExporter, err := otlptracehttp.New(
+		context.Background(),
+		otlptracehttp.WithInsecure(),
+		// 4318 で待ち構えている OTel Collector に送信する
+		otlptracehttp.WithEndpoint("otel-collector:4318"),
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	traceProvider := trace.NewTracerProvider(
-		trace.WithBatcher(traceExporter,
-			// Default is 5s. Set to 1s for demonstrative purposes.
-			trace.WithBatchTimeout(time.Second)),
+		trace.WithBatcher(
+			traceExporter,
+			trace.WithBatchTimeout(time.Second*5),
+		),
 	)
 	return traceProvider, nil
 }

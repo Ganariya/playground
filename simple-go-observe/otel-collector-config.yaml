@@ -1,0 +1,19 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        # 4318 で OtelCollector を動かす
+        # Go アプリが OTel 形式の JSON トレースを 4318 に送ってくる
+        endpoint: "0.0.0.0:4318"
+
+exporters:
+  otlp:
+    endpoint: "http://tempo:3200"
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp]
