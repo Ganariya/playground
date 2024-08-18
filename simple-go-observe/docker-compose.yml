@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  go-observe:
+    build: .
+    container_name: go-observe-container
+    ports:
+      - 1340:1323
