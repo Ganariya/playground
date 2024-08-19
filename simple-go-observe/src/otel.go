@@ -6,14 +6,17 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutlog"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 )
 
 func setupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, err error) {
@@ -84,23 +87,34 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 	// 	return nil, err
 	// }
 
-	traceExporter, err := otlptracehttp.New(
+	traceExporter, err := otlptracegrpc.New(
 		context.Background(),
-		otlptracehttp.WithInsecure(),
-		// 4318 で待ち構えている OTel Collector に送信する
-		otlptracehttp.WithEndpoint("otel-collector:4318"),
+		otlptracegrpc.WithInsecure(),
+		otlptracegrpc.WithEndpoint("otel-collector:4317"),
 	)
 	if err != nil {
 		return nil, err
 	}
+
+	resource := NewResource("go-service", "1.0.0", "local")
 
 	traceProvider := trace.NewTracerProvider(
 		trace.WithBatcher(
 			traceExporter,
 			trace.WithBatchTimeout(time.Second*5),
 		),
+		trace.WithResource(resource),
 	)
 	return traceProvider, nil
+}
+
+func NewResource(serviceName string, version string, environment string) *resource.Resource {
+	return resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String(serviceName),
+		semconv.ServiceVersionKey.String(version),
+		attribute.String("environment", environment),
+	)
 }
 
 func newMeterProvider() (*metric.MeterProvider, error) {

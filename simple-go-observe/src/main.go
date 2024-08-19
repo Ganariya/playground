@@ -105,8 +105,9 @@ func rolldice(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	roll := getDice(ctx)
+	roll2 := getDice2(ctx)
 
-	resp := strconv.Itoa(roll) + "\n"
+	resp := strconv.Itoa(roll+roll2) + "\n"
 	if _, err := io.WriteString(w, resp); err != nil {
 		log.Printf("Write failed: %v\n", err)
 	}
@@ -116,7 +117,15 @@ func getDice(ctx context.Context) int {
 	_, span := tracer.Start(ctx, "getDice")
 	defer span.End()
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
+	return 1 + rand.Intn(6)
+}
+
+func getDice2(ctx context.Context) int {
+	_, span := tracer.Start(ctx, "getDice2")
+	defer span.End()
+
+	time.Sleep(1000 * time.Millisecond)
 	return 1 + rand.Intn(6)
 }

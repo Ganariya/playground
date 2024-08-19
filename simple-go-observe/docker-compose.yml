@@ -12,32 +12,50 @@ services:
       - otel-collector
 
   otel-collector:
-    image: otel/opentelemetry-collector:0.107.0
+    image: otel/opentelemetry-collector:0.67.0
+    restart: always
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
-      - "4318:4318"   # OTLP HTTP receiver
+      - "4317:4317" # OTLP gRPC Receiver
     depends_on:
-      - tempo
+      - jaeger
+      - zipkin
 
-  tempo:
-    image: grafana/tempo
-    command: [ "-config.file=/etc/tempo.yaml" ]
-    volumes:
-      - ./tempo.yaml:/etc/tempo.yaml
+  jaeger:
+    image: "jaegertracing/all-in-one:latest"
     ports:
-      # 3200 で待機する
-      # otel-collector:4318 から tempo:3200 で OTel 形式でメトリクスがエクスポートされる
-      - "3200:3200"
-
-  grafana:
-    image: grafana/grafana:latest
-    volumes:
-      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - "16686:16686"
+      - "14268"
+      - "14250"
     environment:
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - COLLECTOR_OTLP_ENABLED=true
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    restart: always
     ports:
-      - "3000:3000"
+      - "9411:9411"
+
+  # tempo:
+  #   image: grafana/tempo
+  #   command: [ "-config.file=/etc/tempo.yaml" ]
+  #   volumes:
+  #     - ./tempo.yaml:/etc/tempo.yaml
+  #   ports:
+  #     # 3200 で待機する
+  #     # otel-collector:4318 から tempo:3200 で OTel 形式でメトリクスがエクスポートされる
+  #     - "3200:3200"
+  #
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   volumes:
+  #     - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+  #   environment:
+  #     - GF_AUTH_ANONYMOUS_ENABLED=true
+  #     - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+  #     - GF_AUTH_DISABLE_LOGIN_FORM=true
+  #   ports:
+  #     - "3000:3000"

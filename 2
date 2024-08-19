@@ -21,7 +21,7 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [jaeger, zipkin]
+      exporters: [jaeger]
 
   # otlp:
   #   endpoint: "tempo:3200"
