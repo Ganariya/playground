@@ -13,8 +13,9 @@ exporters:
     tls:
       insecure: true
 
-  # tempo は otlp 形式のスパンを受け取る
-  otlp:
+  # otlp 形式のスパンを tempo に送信する
+  # 0.107.0 では jaeger も otlp/jaeger と記載するらしい（jaeger も otlp に対応したため）
+  otlp/tempo:
     endpoint: tempo:4317
     tls:
       insecure: true
@@ -27,5 +28,5 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [zipkin, jaeger, otlp]
+      exporters: [zipkin, jaeger, otlp/tempo]
 
