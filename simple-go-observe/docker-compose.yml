@@ -21,6 +21,7 @@ services:
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
+      # go からのスパンの送信を 4317 で受け付ける
       - "4317:4317" # OTLP gRPC Receiver
     depends_on:
       - jaeger
@@ -31,6 +32,7 @@ services:
     ports:
       - "16686:16686"
       - "14268"
+      # 14250 で通信を受け付ける
       - "14250"
     environment:
       - COLLECTOR_ZIPKIN_HOST_PORT=:9411
@@ -40,6 +42,7 @@ services:
     image: openzipkin/zipkin:latest
     restart: always
     ports:
+      # 9411 で otel-collector からのリクエストを受け付ける
       - "9411:9411"
 
   tempo:
@@ -48,8 +51,8 @@ services:
     volumes:
       - ./tempo.yaml:/etc/tempo.yaml
     ports:
-      # 3200 で待機する
-      # otel-collector:4318 から tempo:3200 で OTel 形式でメトリクスがエクスポートされる
+      # 3200 で tempo の API が待機している
+      # grafana は tempo:3200 に通信を送って、スパンデータを取得する
       - "3200:3200"
 
   grafana:

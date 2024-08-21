@@ -13,6 +13,7 @@ exporters:
     tls:
       insecure: true
 
+  # tempo は otlp 形式のスパンを受け取る
   otlp:
     endpoint: tempo:4317
     tls:
