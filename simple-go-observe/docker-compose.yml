@@ -13,6 +13,9 @@ services:
 
   otel-collector:
     image: otel/opentelemetry-collector:0.67.0
+    # 0.107.0 だと動かない
+    # TODO: なにか破壊的変更が入っている
+    #image: otel/opentelemetry-collector:0.107.0
     restart: always
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
@@ -39,23 +42,25 @@ services:
     ports:
       - "9411:9411"
 
-  # tempo:
-  #   image: grafana/tempo
-  #   command: [ "-config.file=/etc/tempo.yaml" ]
-  #   volumes:
-  #     - ./tempo.yaml:/etc/tempo.yaml
-  #   ports:
-  #     # 3200 で待機する
-  #     # otel-collector:4318 から tempo:3200 で OTel 形式でメトリクスがエクスポートされる
-  #     - "3200:3200"
-  #
-  # grafana:
-  #   image: grafana/grafana:latest
-  #   volumes:
-  #     - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-  #   environment:
-  #     - GF_AUTH_ANONYMOUS_ENABLED=true
-  #     - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-  #     - GF_AUTH_DISABLE_LOGIN_FORM=true
-  #   ports:
-  #     - "3000:3000"
+  tempo:
+    image: grafana/tempo
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+    ports:
+      # 3200 で待機する
+      # otel-collector:4318 から tempo:3200 で OTel 形式でメトリクスがエクスポートされる
+      - "3200:3200"
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    ports:
+      - "3000:3000"
+
+

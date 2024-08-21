@@ -13,6 +13,11 @@ exporters:
     tls:
       insecure: true
 
+  otlp:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
 processors:
   batch:
 
@@ -21,10 +26,5 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [jaeger, zipkin]
-
-  # otlp:
-  #   endpoint: "tempo:3200"
-  #   tls:
-  #     insecure: true
+      exporters: [zipkin, jaeger, otlp]
 
