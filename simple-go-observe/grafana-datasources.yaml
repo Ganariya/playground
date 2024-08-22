@@ -13,3 +13,10 @@ datasources:
     editable: false
     apiVersion: 1
     uid: tempo
+
+  - name: Prometheus
+    type: prometheus
+    url: http://prometheus:9090
+    isDefault: false
+    access: proxy
+    editable: true

@@ -3,7 +3,7 @@ version: '3'
 services:
   go-observe:
     build: .
-    container_name: go-observe-container
+    # container_name: go-observe-container
     ports:
       # 1323 で内部的に go が待ち構えている
       # 1340 で localhost からアクセスできる
@@ -66,4 +66,21 @@ services:
     ports:
       - "3000:3000"
 
+  prometheus:
+    image: prom/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prom_data:/prometheus
 
+  node-exporter:
+    image: prom/node-exporter
+    ports:
+      - 9100:9100
+    restart: unless-stopped
+volumes:
+  prom_data:
