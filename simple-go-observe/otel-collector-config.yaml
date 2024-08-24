@@ -20,6 +20,9 @@ exporters:
     tls:
       insecure: true
 
+  file:
+    path: /tmp/samplelog.json
+
 processors:
   batch:
 
@@ -29,4 +32,8 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [zipkin, jaeger, otlp/tempo]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [file]
 

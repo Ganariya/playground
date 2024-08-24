@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 )
@@ -21,6 +22,7 @@ const name = "simple-go-observe/src"
 
 var (
 	tracer = otel.Tracer(name)
+	logger = otelslog.NewLogger(name)
 )
 
 func main() {
@@ -107,6 +109,8 @@ func rolldice(w http.ResponseWriter, r *http.Request) {
 	roll := getDice(ctx)
 	roll2 := getDice2(ctx)
 
+	logger.InfoContext(ctx, "rolldice start!", "roll", roll, "roll2", roll2)
+
 	resp := strconv.Itoa(roll+roll2) + "\n"
 	if _, err := io.WriteString(w, resp); err != nil {
 		log.Printf("Write failed: %v\n", err)
@@ -114,8 +118,10 @@ func rolldice(w http.ResponseWriter, r *http.Request) {
 }
 
 func getDice(ctx context.Context) int {
-	_, span := tracer.Start(ctx, "getDice")
+	ctx, span := tracer.Start(ctx, "getDice")
 	defer span.End()
+
+	logger.InfoContext(ctx, "getDice start!")
 
 	time.Sleep(500 * time.Millisecond)
 
@@ -123,8 +129,10 @@ func getDice(ctx context.Context) int {
 }
 
 func getDice2(ctx context.Context) int {
-	_, span := tracer.Start(ctx, "getDice2")
+	ctx, span := tracer.Start(ctx, "getDice2")
 	defer span.End()
+
+	logger.InfoContext(ctx, "getDice2 start!")
 
 	time.Sleep(1000 * time.Millisecond)
 	return 1 + rand.Intn(6)

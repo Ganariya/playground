@@ -7,9 +7,11 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutlog"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
+	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/log"
@@ -81,12 +83,14 @@ func newPropagator() propagation.TextMapPropagator {
 
 // トレース情報を記録する
 func newTraceProvider() (*trace.TracerProvider, error) {
-	// traceExporter, err := stdouttrace.New(
-	// 	stdouttrace.WithPrettyPrint())
-	// if err != nil {
-	// 	return nil, err
-	// }
+	// 標準出力にそのまま書き出す場合
+	stdoutExporter, err := stdouttrace.New(
+		stdouttrace.WithPrettyPrint())
+	if err != nil {
+		return nil, err
+	}
 
+	// grpc で otel-collector に span を送る
 	traceExporter, err := otlptracegrpc.New(
 		context.Background(),
 		otlptracegrpc.WithInsecure(),
@@ -101,6 +105,10 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 	traceProvider := trace.NewTracerProvider(
 		trace.WithBatcher(
 			traceExporter,
+			trace.WithBatchTimeout(time.Second*5),
+		),
+		trace.WithBatcher(
+			stdoutExporter,
 			trace.WithBatchTimeout(time.Second*5),
 		),
 		trace.WithResource(resource),
@@ -137,8 +145,18 @@ func newLoggerProvider() (*log.LoggerProvider, error) {
 		return nil, err
 	}
 
+	grpcLogExporter, err := otlploggrpc.New(
+		context.Background(),
+		otlploggrpc.WithInsecure(),
+		otlploggrpc.WithEndpoint("otel-collector:4317"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	loggerProvider := log.NewLoggerProvider(
 		log.WithProcessor(log.NewBatchProcessor(logExporter)),
+		log.WithProcessor(log.NewBatchProcessor(grpcLogExporter)),
 	)
 	return loggerProvider, nil
 }

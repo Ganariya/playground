@@ -20,6 +20,7 @@ services:
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./samplelog.json:/tmp/samplelog.json
     ports:
       # go からのスパンの送信を 4317 で受け付ける
       - "4317:4317" # OTLP gRPC Receiver
