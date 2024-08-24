@@ -24,6 +24,7 @@ import (
 
 const (
 	OPENTELEMETRY_COLLECTOR_ADDRESS = "OPENTELEMETRY_COLLECTOR_ADDRESS"
+	SERVICE_NAME                    = "go-observe" // 本当は setupOTelSDK(serviceName, version, ...) のように可変にしておいたほうがよい
 )
 
 func setupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, err error) {
@@ -107,7 +108,7 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 		return nil, err
 	}
 
-	resource := NewResource("go-service", "1.0.0", "local")
+	resource := NewResource(SERVICE_NAME, "1.0.0", "local")
 
 	traceProvider := trace.NewTracerProvider(
 		trace.WithBatcher(
@@ -121,15 +122,6 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 		trace.WithResource(resource),
 	)
 	return traceProvider, nil
-}
-
-func NewResource(serviceName string, version string, environment string) *resource.Resource {
-	return resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceNameKey.String(serviceName),
-		semconv.ServiceVersionKey.String(version),
-		attribute.String("environment", environment),
-	)
 }
 
 func newMeterProvider() (*metric.MeterProvider, error) {
@@ -163,9 +155,21 @@ func newLoggerProvider() (*log.LoggerProvider, error) {
 		return nil, err
 	}
 
+	resource := NewResource(SERVICE_NAME, "1.0.0", "local")
+
 	loggerProvider := log.NewLoggerProvider(
 		log.WithProcessor(log.NewBatchProcessor(logExporter)),
 		log.WithProcessor(log.NewBatchProcessor(grpcLogExporter)),
+		log.WithResource(resource),
 	)
 	return loggerProvider, nil
+}
+
+func NewResource(serviceName string, version string, environment string) *resource.Resource {
+	return resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String(serviceName),
+		semconv.ServiceVersionKey.String(version),
+		attribute.String("environment", environment),
+	)
 }

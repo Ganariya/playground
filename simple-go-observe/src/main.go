@@ -16,6 +16,8 @@ import (
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 const name = "simple-go-observe/src"
@@ -106,10 +108,12 @@ func rolldice(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(r.Context(), "rolldice")
 	defer span.End()
 
+	logger.InfoContext(ctx, "rolldice start!")
+
 	roll := getDice(ctx)
 	roll2 := getDice2(ctx)
 
-	logger.InfoContext(ctx, "rolldice start!", "roll", roll, "roll2", roll2)
+	_ = fetchTodo(ctx)
 
 	resp := strconv.Itoa(roll+roll2) + "\n"
 	if _, err := io.WriteString(w, resp); err != nil {
@@ -136,4 +140,40 @@ func getDice2(ctx context.Context) int {
 
 	time.Sleep(1000 * time.Millisecond)
 	return 1 + rand.Intn(6)
+}
+
+func fetchTodo(ctx context.Context) error {
+	client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
+	TODO_URL := "https://jsonplaceholder.typicode.com/todos/1"
+
+	tracer := otel.Tracer("fetch-todo-client")
+	ctx, span := tracer.Start(ctx, "fetch-todo")
+	defer span.End()
+
+	logger.InfoContext(ctx, "fetchTodo start!")
+
+	req, err := http.NewRequestWithContext(ctx, "GET", TODO_URL, nil)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	span.SetAttributes(attribute.String("http.method", "GET"))
+	span.SetAttributes(attribute.String("http.url", TODO_URL))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+	defer resp.Body.Close()
+
+	logger.InfoContext(ctx, "fetchTodo end!")
+
+	span.SetStatus(codes.Ok, "ok")
+	span.SetAttributes(attribute.Int("http.status_code", resp.StatusCode))
+
+	return nil
 }
