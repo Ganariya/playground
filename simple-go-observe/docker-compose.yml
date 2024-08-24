@@ -27,6 +27,8 @@ services:
     depends_on:
       - jaeger
       - zipkin
+      - loki
+      - tempo
 
   jaeger:
     image: "jaegertracing/all-in-one:latest"
@@ -83,5 +85,16 @@ services:
     ports:
       - 9100:9100
     restart: unless-stopped
+
+  loki:
+    # 3.1.1 の場合 http://loki:3100/otlp で動作する
+    # ドキュメントによって /otlp/v1/logs が指定されているが、 3.1.1 で /otlp/v1/logs では動作しない
+    image: grafana/loki:3.1.1
+    command: [ "-config.file=/etc/loki/loki.yaml" ]
+    volumes:
+      - ./loki.yaml:/etc/loki/loki.yaml
+    ports:
+      - 3100:3100
+
 volumes:
   prom_data:

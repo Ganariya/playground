@@ -20,8 +20,18 @@ exporters:
     tls:
       insecure: true
 
+  # デバッグ用にローカルに samplelog.json を作成する
   file:
     path: /tmp/samplelog.json
+
+  # loki にログを oltphttp 形式で送信する
+  otlphttp:
+    # ドキュメントによって endpoint のパスが異なる
+    # 3.1.1 の場合 /otlp で動作したが、 /otlp/v1/logs では動作しない
+    # https://grafana.com/docs/loki/next/send-data/otel/
+    # https://grafana.com/docs/loki/latest/send-data/otel/
+    endpoint: http://loki:3100/otlp
+    # endpoint: http://loki:3100/otlp/v1/logs
 
 processors:
   batch:
@@ -35,5 +45,5 @@ service:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [file]
+      exporters: [file, otlphttp]
 
