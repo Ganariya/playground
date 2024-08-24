@@ -8,6 +8,8 @@ services:
       # 1323 で内部的に go が待ち構えている
       # mac host からは 1340 でアクセスする
       - 1340:1323
+    environment:
+      - OPENTELEMETRY_COLLECTOR_ADDRESS=otel-collector:4317
     depends_on:
       - otel-collector
 

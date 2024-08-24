@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"os"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -19,6 +20,10 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
+)
+
+const (
+	OPENTELEMETRY_COLLECTOR_ADDRESS = "OPENTELEMETRY_COLLECTOR_ADDRESS"
 )
 
 func setupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, err error) {
@@ -83,6 +88,8 @@ func newPropagator() propagation.TextMapPropagator {
 
 // トレース情報を記録する
 func newTraceProvider() (*trace.TracerProvider, error) {
+	openTelemetryExporterAddress := os.Getenv(OPENTELEMETRY_COLLECTOR_ADDRESS)
+
 	// 標準出力にそのまま書き出す場合
 	stdoutExporter, err := stdouttrace.New(
 		stdouttrace.WithPrettyPrint())
@@ -94,7 +101,7 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 	traceExporter, err := otlptracegrpc.New(
 		context.Background(),
 		otlptracegrpc.WithInsecure(),
-		otlptracegrpc.WithEndpoint("otel-collector:4317"),
+		otlptracegrpc.WithEndpoint(openTelemetryExporterAddress),
 	)
 	if err != nil {
 		return nil, err
@@ -140,6 +147,8 @@ func newMeterProvider() (*metric.MeterProvider, error) {
 }
 
 func newLoggerProvider() (*log.LoggerProvider, error) {
+	openTelemetryExporterAddress := os.Getenv(OPENTELEMETRY_COLLECTOR_ADDRESS)
+
 	logExporter, err := stdoutlog.New()
 	if err != nil {
 		return nil, err
@@ -148,7 +157,7 @@ func newLoggerProvider() (*log.LoggerProvider, error) {
 	grpcLogExporter, err := otlploggrpc.New(
 		context.Background(),
 		otlploggrpc.WithInsecure(),
-		otlploggrpc.WithEndpoint("otel-collector:4317"),
+		otlploggrpc.WithEndpoint(openTelemetryExporterAddress),
 	)
 	if err != nil {
 		return nil, err
