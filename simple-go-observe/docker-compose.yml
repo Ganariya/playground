@@ -1,0 +1,104 @@
+version: '3'
+
+services:
+  go-observe:
+    build: .
+    # container_name: go-observe-container
+    ports:
+      # 1323 で内部的に go が待ち構えている
+      # mac host からは 1340 でアクセスする
+      - 1340:1323
+    environment:
+      - OPENTELEMETRY_COLLECTOR_ADDRESS=otel-collector:4317
+    depends_on:
+      - otel-collector
+
+  # OTlp 形式のスパンとログを受け取る
+  # その後複数のサービスにそれらを転送する
+  otel-collector:
+    image: otel/opentelemetry-collector:0.67.0
+    # TODO: 0.107.0 だと動作しない; なにか破壊的変更が入っている
+    # image: otel/opentelemetry-collector:0.107.0
+    restart: always
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./conf/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./samplelog.json:/tmp/samplelog.json
+    ports:
+      # go からのスパン & ログの送信を 4317 で受け付ける
+      - "4317:4317" # OTLP gRPC Receiver
+    depends_on:
+      - jaeger
+      - zipkin
+      - loki
+      - tempo
+
+  jaeger:
+    image: "jaegertracing/all-in-one:latest"
+    ports:
+      # 16686 で WebUI を表示する
+      - "16686:16686"
+      - "14268"
+      # 14250 で otel-collector からの転送を受け取る
+      - "14250"
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - COLLECTOR_OTLP_ENABLED=true
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    restart: always
+    ports:
+      # 9411 で otel-collector からのリクエストを受け付ける
+      - "9411:9411"
+
+  tempo:
+    image: grafana/tempo
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./conf/tempo.yaml:/etc/tempo.yaml
+    ports:
+      # 3200 で grafana-tempo の API が待機している
+      # grafana-server は tempo:3200 の /api/search, /api/traces/{traceID} にリクエストを送信しトレースデータを取得する
+      - "3200:3200"
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./conf/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    ports:
+      - "3000:3000"
+
+  prometheus:
+    image: prom/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - ./conf/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prom_data:/prometheus
+
+  node-exporter:
+    image: prom/node-exporter
+    ports:
+      - 9100:9100
+    restart: unless-stopped
+
+  loki:
+    # 3.1.1 の場合 http://loki:3100/otlp で動作する
+    # ドキュメントによって /otlp/v1/logs が指定されているが、 3.1.1 で /otlp/v1/logs では動作しない
+    image: grafana/loki:3.1.1
+    command: [ "-config.file=/etc/loki/loki.yaml" ]
+    volumes:
+      - ./conf/loki.yaml:/etc/loki/loki.yaml
+    ports:
+      - 3100:3100
+
+volumes:
+  prom_data:

@@ -1,0 +1,49 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+
+exporters:
+  zipkin:
+    endpoint: "http://zipkin:9411/api/v2/spans"
+    format: proto
+
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+
+  # otlp 形式のスパンを tempo に送信する
+  # 0.107.0 では jaeger も otlp/jaeger と記載するらしい（jaeger も otlp に対応したため）
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+  # デバッグ用にローカルに samplelog.json を作成する
+  file:
+    path: /tmp/samplelog.json
+
+  # loki にログを oltphttp 形式で送信する
+  otlphttp:
+    # ドキュメントによって endpoint のパスが異なる
+    # 3.1.1 の場合 /otlp で動作したが、 /otlp/v1/logs では動作しない
+    # https://grafana.com/docs/loki/next/send-data/otel/
+    # https://grafana.com/docs/loki/latest/send-data/otel/
+    endpoint: http://loki:3100/otlp
+    # endpoint: http://loki:3100/otlp/v1/logs
+
+processors:
+  batch:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [zipkin, jaeger, otlp/tempo]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [file, otlphttp]
+
