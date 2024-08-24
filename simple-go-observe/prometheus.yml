@@ -27,6 +27,7 @@ scrape_configs:
     # localhost:9090 は prometheus 自身にアクセスしている
     - localhost:9090
 
+  # node-exporter と呼ばれる、ノードのメトリクスを取得する exporter を利用する
 - job_name: node-exporter
   honor_timestamps: true
   scrape_interval: 15s
@@ -35,4 +36,5 @@ scrape_configs:
   scheme: http
   static_configs:
   - targets:
+    # node-exporter は 9100 ポートの /metrics で待機している
     - node-exporter:9100

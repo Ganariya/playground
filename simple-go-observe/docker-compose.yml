@@ -6,23 +6,24 @@ services:
     # container_name: go-observe-container
     ports:
       # 1323 で内部的に go が待ち構えている
-      # 1340 で localhost からアクセスできる
+      # mac host からは 1340 でアクセスする
       - 1340:1323
     depends_on:
       - otel-collector
 
+  # OTlp 形式のスパンとログを受け取る
+  # その後複数のサービスにそれらを転送する
   otel-collector:
     image: otel/opentelemetry-collector:0.67.0
-    # 0.107.0 だと動かない
-    # TODO: なにか破壊的変更が入っている
-    #image: otel/opentelemetry-collector:0.107.0
+    # TODO: 0.107.0 だと動作しない; なにか破壊的変更が入っている
+    # image: otel/opentelemetry-collector:0.107.0
     restart: always
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
       - ./samplelog.json:/tmp/samplelog.json
     ports:
-      # go からのスパンの送信を 4317 で受け付ける
+      # go からのスパン & ログの送信を 4317 で受け付ける
       - "4317:4317" # OTLP gRPC Receiver
     depends_on:
       - jaeger
@@ -33,9 +34,10 @@ services:
   jaeger:
     image: "jaegertracing/all-in-one:latest"
     ports:
+      # 16686 で WebUI を表示する
       - "16686:16686"
       - "14268"
-      # 14250 で通信を受け付ける
+      # 14250 で otel-collector からの転送を受け取る
       - "14250"
     environment:
       - COLLECTOR_ZIPKIN_HOST_PORT=:9411
@@ -54,8 +56,8 @@ services:
     volumes:
       - ./tempo.yaml:/etc/tempo.yaml
     ports:
-      # 3200 で tempo の API が待機している
-      # grafana は tempo:3200 に通信を送って、スパンデータを取得する
+      # 3200 で grafana-tempo の API が待機している
+      # grafana-server は tempo:3200 の /api/search, /api/traces/{traceID} にリクエストを送信しトレースデータを取得する
       - "3200:3200"
 
   grafana:
