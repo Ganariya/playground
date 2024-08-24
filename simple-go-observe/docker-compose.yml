@@ -22,7 +22,7 @@ services:
     restart: always
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./conf/otel-collector-config.yaml:/etc/otel-collector-config.yaml
       - ./samplelog.json:/tmp/samplelog.json
     ports:
       # go からのスパン & ログの送信を 4317 で受け付ける
@@ -56,7 +56,7 @@ services:
     image: grafana/tempo
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
-      - ./tempo.yaml:/etc/tempo.yaml
+      - ./conf/tempo.yaml:/etc/tempo.yaml
     ports:
       # 3200 で grafana-tempo の API が待機している
       # grafana-server は tempo:3200 の /api/search, /api/traces/{traceID} にリクエストを送信しトレースデータを取得する
@@ -65,7 +65,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     volumes:
-      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./conf/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
@@ -81,7 +81,7 @@ services:
       - 9090:9090
     restart: unless-stopped
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./conf/prometheus.yml:/etc/prometheus/prometheus.yml
       - prom_data:/prometheus
 
   node-exporter:
@@ -96,7 +96,7 @@ services:
     image: grafana/loki:3.1.1
     command: [ "-config.file=/etc/loki/loki.yaml" ]
     volumes:
-      - ./loki.yaml:/etc/loki/loki.yaml
+      - ./conf/loki.yaml:/etc/loki/loki.yaml
     ports:
       - 3100:3100
 
