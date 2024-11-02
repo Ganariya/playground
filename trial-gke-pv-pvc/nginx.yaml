@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: nginx
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "50m"
+          volumeMounts:
+            - mountPath: /nginx/volumes/nginx-pvc-mono-1
+              name: nginx-pvc-mono-1-volume
+            - mountPath: /nginx/volumes/nginx-static-pvc
+              name: nginx-static-pvc-volume
+      volumes:
+        - name: nginx-pvc-mono-1-volume
+          persistentVolumeClaim:
+            claimName: nginx-pvc-mono-1
+            readOnly: false
+        - name: nginx-static-pvc-volume
+          persistentVolumeClaim:
+            claimName: nginx-static-pvc
+            readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  # 単体で設定する
+  name: nginx-pvc-mono-1
+  namespace: nginx
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver?hl=ja#create_a_storageclass
+  # 標準永続ディスク
+  storageClassName: standard-rwo
+  # https://qiita.com/dingtianhongjie/items/6d6014498ab503fc1683
+  # persistentVolumeReclaimPolicy は PV 側に設定し、 PVC では変更できない
+  # kubectl describe sc standard-rwo をみると、 StorageClass において Delete Policy が設定されている
+  # そのため動的 PVC 定義の場合は、 PVC を削除した瞬間に GCE ディスクも消えてしまうため注意する
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nginx-static-pv
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  # PV が削除されても, GCE ディスクは残す
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: standard-rwo
+  gcePersistentDisk:
+    # 事前に手動でGCPコンソールにおいて nginx-static-disk という名前でディスクを作らないといけない
+    pdName: nginx-static-disk
+    fsType: ext4
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-static-pvc
+  namespace: nginx
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard-rwo
+  volumeName: nginx-static-pv
