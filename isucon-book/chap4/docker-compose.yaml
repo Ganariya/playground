@@ -1,0 +1,23 @@
+# private-isu
+# networks:
+#   my_network:
+#     name: my_network
+
+networks:
+  # private-isu の network につなぐ
+  my_network:
+    name: my_network
+    external: true
+
+services:
+  k6:
+    image: grafana/k6:latest
+    networks:
+      - my_network
+    ports:
+      - "6565:6565"
+    volumes:
+      - ./k6-scripts:/scripts
+    # 常時起動させる
+    tty: true
+    entrypoint: /bin/sh
