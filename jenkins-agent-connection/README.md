@@ -19,7 +19,7 @@ terraform によって GCP 上に以下のリソースを立ち上げます。
 
 ```txt
 # terraform.tfvars を修正する
-project_id = "ganyariya" # apply するときの gcp project の id に変更する
+project_id = "your-project-id" # apply するときの gcp project の id に変更する
 region     = "asia-northeast1"
 zone       = "asia-northeast1-a"
 ```
