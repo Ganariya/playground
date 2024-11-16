@@ -17,6 +17,37 @@ resource "google_compute_address" "jenkins_master_node_static_ip" {
 }
 
 /*
+jenkins-agent-node は外部IPアドレスを持たないため apt update が行えない
+そのため NAT を定義する
+*/
+
+resource "google_compute_router" "jenkins_network_router" {
+  name    = "jenkins-network-router"
+  region  = google_compute_subnetwork.jenkins_subnetwork.region
+  network = google_compute_network.jenkins_network.id
+
+  bgp {
+    # Local ASN Number
+    asn = 64514
+  }
+}
+
+resource "google_compute_router_nat" "jenkins_network_router_nat" {
+  name                               = "jenkins-network-router-nat"
+  router                             = google_compute_router.jenkins_network_router.name
+  region                             = google_compute_router.jenkins_network_router.region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+
+  auto_network_tier = "STANDARD"
+
+  log_config {
+    enable = true
+    filter = "ERRORS_ONLY"
+  }
+}
+
+/*
 default firewall
 */
 
