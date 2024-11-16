@@ -13,10 +13,11 @@ resource "google_compute_disk" "jenkins_agent_node_disk" {
 
 
 resource "google_compute_instance" "jenkins_master_node" {
-  name         = "jenkins-master-node"
-  machine_type = "f1-micro"
-  zone         = var.zone
-  tags         = ["jenkins-network-server"]
+  name                      = "jenkins-master-node"
+  machine_type              = "e2-medium"
+  zone                      = var.zone
+  tags                      = ["jenkins-network-server"]
+  allow_stopping_for_update = true # terraform がインスタンスを停止できるようにする（マシンタイプを変更できる）
 
   boot_disk {
     auto_delete = true
@@ -30,13 +31,18 @@ resource "google_compute_instance" "jenkins_master_node" {
       nat_ip = google_compute_address.jenkins_master_node_static_ip.address
     }
   }
+
+  # startup log の確認方法
+  # sudo journalctl -u google-startup-scripts.service
+  metadata_startup_script = file("${path.module}/scripts/master-node-startup.sh")
 }
 
 resource "google_compute_instance" "jenkins_agent_node" {
-  name         = "jenkins-agent-node"
-  machine_type = "f1-micro"
-  zone         = var.zone
-  tags         = []
+  name                      = "jenkins-agent-node"
+  machine_type              = "e2-medium"
+  zone                      = var.zone
+  tags                      = []
+  allow_stopping_for_update = true
 
   boot_disk {
     auto_delete = true
