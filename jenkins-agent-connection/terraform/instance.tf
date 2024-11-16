@@ -20,7 +20,7 @@ resource "google_compute_instance" "jenkins_master_node" {
   allow_stopping_for_update = true # terraform がインスタンスを停止できるようにする（マシンタイプを変更できる）
 
   boot_disk {
-    auto_delete = false # true にすると terraform apply で recreate されるときにエラーがでるので false にする
+    auto_delete = false
     source      = google_compute_disk.jenkins_master_node_disk.self_link
   }
 
