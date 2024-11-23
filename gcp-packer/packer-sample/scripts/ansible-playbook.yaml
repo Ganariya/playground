@@ -1,5 +1,5 @@
 - hosts: all
-  become: true
+  become: yes
   tasks:
     - name: update apt repository
       apt:
@@ -9,3 +9,6 @@
       apt:
         name:
           - yq
+
+  # 他の playbook を利用する
+- import_playbook: common/docker-playbook.yaml

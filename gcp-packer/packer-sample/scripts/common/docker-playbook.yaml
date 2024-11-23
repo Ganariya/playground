@@ -1,0 +1,57 @@
+- hosts: all
+  become: yes
+
+  # 変数を定義できる
+  vars:
+    # debian と ubuntu で url が異なるため注意（3敗）
+    docker_gpg_key_url: "https://download.docker.com/linux/debian/gpg"
+    docker_gpg_key_path: "/etc/apt/keyrings/docker.asc"
+
+  tasks:
+    # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/apt_module.html
+    - name: Install docker dependencies
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - ca-certificates
+          - curl
+
+    # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/file_module.html
+    - name: Create APT's keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/get_url_module.html
+    # docker_gpg_key_url からダウンロードして docker-gpg_key_path に保存する
+    - name: Download Docker's GPG key
+      get_url:
+        url: "{{ docker_gpg_key_url }}"
+        dest: "{{ docker_gpg_key_path }}"
+        # 全員に読み取り権限をつける
+        mode: "0644"
+
+    # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html
+    - name: Get Ubuntu distribution
+      shell: grep VERSION_CODENAME /etc/os-release | cut -d= -f2
+      register: ubuntu_codename
+
+    # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html
+    - name: Get system architecture
+      ansible.builtin.command: dpkg --print-architecture
+      # https://docs.ansible.com/ansible/2.9_ja/user_guide/playbooks_variables.html?highlight=register#registered-variables
+      # task の結果を変数に格納できる
+      register: system_architecture
+
+    # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/apt_repository_module.html
+    - name: Add Docker repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch={{ system_architecture.stdout }} signed-by={{ docker_gpg_key_path }}] https://download.docker.com/linux/debian {{ ubuntu_codename.stdout }} stable"
+        filename: docker
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+        update_cache: yes

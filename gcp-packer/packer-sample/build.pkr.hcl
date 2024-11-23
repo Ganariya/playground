@@ -16,8 +16,14 @@ build {
     ]
   }
 
+  provisioner "file" {
+    source = "nomi"
+    destination = "nomi"
+  }
+
   provisioner "ansible" {
     playbook_file   = "./scripts/ansible-playbook.yaml"
+    # ansible が実行されるときのユーザ
     user            = "packer"
     extra_arguments = ["-vvvv"]
   }
