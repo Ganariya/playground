@@ -1,3 +1,3 @@
 variable "image-name" {
-    type = string
+  type = string
 }
