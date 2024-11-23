@@ -10,6 +10,8 @@ build {
       "HOGE=hello, world!"
     ]
 
+    # /home/packer/example.txt ができる
+    # そのため source.googlecompute.yqimage の ssh_username 配下がデフォルトワークスペースとなっている
     inline = [
       "echo Add hello, world! text file",
       "echo \"$HOGE ${var.image_name}\" > example.txt",
@@ -18,6 +20,7 @@ build {
 
   provisioner "file" {
     source = "nomi"
+    # /home/packer/nomi におかれる
     destination = "nomi"
   }
 
