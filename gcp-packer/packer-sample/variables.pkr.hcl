@@ -1,3 +1,3 @@
-variable "image-name" {
+variable "image_name" {
   type = string
 }

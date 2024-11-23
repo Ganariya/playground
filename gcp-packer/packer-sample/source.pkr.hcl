@@ -9,6 +9,6 @@ source "googlecompute" "yqimage" {
   preemptible         = true
   ssh_username        = "packer"
   zone                = "asia-northeast1-b"
-  image_name          = var.image-name
+  image_name          = var.image_name
   tags                = ["packer"]
 }

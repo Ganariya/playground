@@ -1,1 +1,1 @@
-image-name = "yq-test-image"
+image_name = "yq-test-image"
