@@ -1,0 +1,1 @@
+image_name = "ganyariya-packer-yq-image"

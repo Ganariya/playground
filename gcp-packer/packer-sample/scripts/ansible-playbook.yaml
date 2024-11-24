@@ -1,0 +1,14 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: update apt repository
+      apt:
+        update_cache: yes
+
+    - name: install yq
+      apt:
+        name:
+          - yq
+
+  # 他の playbook を利用する
+- import_playbook: common/docker-playbook.yaml
