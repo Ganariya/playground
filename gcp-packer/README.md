@@ -1,9 +1,16 @@
-GCP において
 
-- Packer
-- with Ansible
+## 概要
 
-をためす
+GCP において Packer で image をビルドするサンプルです。
+
+以下が入ったイメージを作成します。
+
+- yq
+- docker
+
+ansible module を利用することで必要なパッケージを簡潔にインストールできます。
+
+## build
 
 ```bash
 cd packer-sample
