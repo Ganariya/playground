@@ -1,1 +1,1 @@
-image_name = "yq-test-image"
+image_name = "ganyariya-packer-yq-image"

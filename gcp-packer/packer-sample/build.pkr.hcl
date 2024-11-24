@@ -28,6 +28,6 @@ build {
     playbook_file   = "./scripts/ansible-playbook.yaml"
     # ansible が実行されるときのユーザ
     user            = "packer"
-    extra_arguments = ["-vvvv"]
+    extra_arguments = ["-v"]
   }
 }

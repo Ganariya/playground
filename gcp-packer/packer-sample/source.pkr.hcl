@@ -13,7 +13,8 @@ source "googlecompute" "yqimage" {
   disk_type           = "pd-standard"
   machine_type        = "e2-medium"
   # GCP 上で作成されるイメージの名前
-  image_name          = "packer-ganyariya-{{timestamp}}"
+  # image_name          = "packer-ganyariya-{{timestamp}}"
+  image_name          = var.image_name
   # packer というユーザを作成したうえで
   # packer user でイマージの作成（プロビジョニング）が実行される
   ssh_username        = "packer"
